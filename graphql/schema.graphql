@@ -1,0 +1,122 @@
+scalar Upload @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\Upload")
+scalar DateTime @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\DateTime")
+
+type User {
+    id: ID!
+    first_name: String!
+    last_name: String!
+    email: String!
+    phone: String
+    address: String
+    salary: Float!
+    system_role: String!
+    job_role: String
+    created_at: DateTime!
+    updated_at: DateTime!
+    deleted_at: DateTime
+}
+
+type AuthPayload {
+    token: String!
+}
+
+type MessagePayload {
+    message: String!
+}
+
+type JobPayload {
+    job_id: String!
+}
+
+type ImportResult {
+    success_count: Int!
+    errors: [ImportError!]!
+}
+
+type ImportError {
+    row: Int!
+    message: String!
+}
+
+type ExportPayload {
+    url: String!
+}
+
+input CreateEmployeeInput {
+    first_name: String @rules(apply: ["required", "string", "max:255"])
+    last_name: String @rules(apply: ["required", "string", "max:255"])
+    email: String @rules(apply: ["required", "email", "max:255"])
+    phone: String @rules(apply: ["nullable", "string", "max:20"])
+    address: String @rules(apply: ["nullable", "string", "max:500"])
+    salary: Float @rules(apply: ["required", "numeric", "min:0"])
+    system_role: String @rules(apply: ["required", "in:admin,employee"])
+    job_role: String @rules(apply: ["nullable", "string", "max:255"])
+    password: String @rules(apply: ["required", "string", "min:6"])
+}
+
+input UpdateEmployeeInput {
+    first_name: String @rules(apply: ["string", "max:255"])
+    last_name: String @rules(apply: ["string", "max:255"])
+    email: String @rules(apply: ["email", "max:255"])
+    phone: String @rules(apply: ["nullable", "string", "max:20"])
+    address: String @rules(apply: ["nullable", "string", "max:500"])
+    salary: Float @rules(apply: ["numeric", "min:0"])
+    system_role: String @rules(apply: ["in:admin,employee"])
+    job_role: String @rules(apply: ["nullable", "string", "max:255"])
+    password: String @rules(apply: ["string", "min:6"])
+}
+
+type Query {
+    me: User! @guard @auth
+
+    employee(id: ID!): User!
+        @field(resolver: "App\\GraphQL\\Queries\\EmployeeQuery@resolve")
+
+    employees(search: String, page: Int): EmployeePagination!
+        @field(resolver: "App\\GraphQL\\Queries\\EmployeesQuery@resolve")
+
+    exportEmployees: ExportPayload!
+        @field(resolver: "App\\GraphQL\\Queries\\ExportEmployees@resolve")
+}
+
+type Mutation {
+    login(email: String! @rules(apply: ["required", "email"]), password: String! @rules(apply: ["required"])): AuthPayload!
+        @field(resolver: "App\\GraphQL\\Mutations\\Auth\\Login@resolve")
+
+    refreshToken: AuthPayload!
+        @field(resolver: "App\\GraphQL\\Mutations\\Auth\\RefreshToken@resolve")
+
+    logout: MessagePayload!
+        @field(resolver: "App\\GraphQL\\Mutations\\Auth\\Logout@resolve")
+        @guard(with: ["api"])
+
+    createEmployee(input: CreateEmployeeInput! @spread): User!
+        @field(resolver: "App\\GraphQL\\Mutations\\Employee\\CreateEmployee@resolve")
+
+    updateEmployee(id: ID!, input: UpdateEmployeeInput! @spread): User!
+        @field(resolver: "App\\GraphQL\\Mutations\\Employee\\UpdateEmployee@resolve")
+
+    deleteEmployee(id: ID!): MessagePayload!
+        @field(resolver: "App\\GraphQL\\Mutations\\Employee\\DeleteEmployee@resolve")
+
+    restoreEmployee(id: ID!): MessagePayload!
+        @field(resolver: "App\\GraphQL\\Mutations\\Employee\\RestoreEmployee@resolve")
+
+    generateEmployees(count: Int! @rules(apply: ["required", "integer", "min:1", "max:10000"])): JobPayload!
+        @field(resolver: "App\\GraphQL\\Mutations\\Employee\\GenerateEmployees@resolve")
+
+    importEmployees(file: Upload!): ImportResult!
+        @field(resolver: "App\\GraphQL\\Mutations\\Employee\\ImportEmployees@resolve")
+}
+
+type PaginatorInfo {
+    count: Int!
+    currentPage: Int!
+    lastPage: Int!
+    total: Int!
+}
+
+type EmployeePagination {
+    data: [User!]!
+    paginatorInfo: PaginatorInfo!
+}

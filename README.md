@@ -1,59 +1,328 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Employee Management API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A GraphQL-based backend API for managing employee records, built with Laravel 12.
 
-## About Laravel
+## Project Overview
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+This system provides:
+- JWT-based authentication (login, token refresh, logout)
+- Role-based access control (Admin and Employee roles)
+- Full employee CRUD with soft deletes (recoverable removal)
+- Bulk employee generation (10,000 records) via queued job
+- Excel import for bulk updates with row-level validation
+- Excel export of all employee records
+- Paginated employee listing with search by name or email
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Tech Stack
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| Component | Package |
+|-----------|---------|
+| Framework | Laravel 12 |
+| API Layer | GraphQL via [nuwave/lighthouse](https://lighthouse-php.com) |
+| Auth | JWT via [tymon/jwt-auth](https://github.com/tymondesigns/jwt-auth) |
+| Excel | [Maatwebsite/Laravel-Excel](https://laravel-excel.com) |
+| Test Data | Faker (bundled with Laravel) |
 
-## Learning Laravel
+## Prerequisites
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+- PHP 8.2+
+- MySQL 5.7+ (or MariaDB 10.3+)
+- Composer
+- PHP extensions: `ext-zip`, `ext-pdo_mysql`, `ext-fileinfo`
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Environment Setup
 
-## Laravel Sponsors
+1. **Clone and install dependencies**
+   ```bash
+   git clone <repository-url>
+   cd employee-management-api
+   composer install
+   ```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+2. **Configure environment**
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Update `.env` with your database credentials:
+   ```
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=employee_management
+   DB_USERNAME=root
+   DB_PASSWORD=
+   ```
 
-### Premium Partners
+3. **Generate app key and JWT secret**
+   ```bash
+   php artisan key:generate
+   php artisan jwt:secret
+   ```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+4. **Run migrations and seed**
+   ```bash
+   php artisan migrate --seed
+   ```
+   This creates the database structure and seeds a default admin user.
 
-## Contributing
+5. **Generate sample Excel import template (optional)**
+   ```bash
+   php artisan sample:excel
+   ```
+   The sample file will be saved to `storage/app/sample-import-template.xlsx`.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Default Credentials
 
-## Code of Conduct
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@example.com | password |
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## How to Run
 
-## Security Vulnerabilities
+Start the development server:
+```bash
+php artisan serve
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+The GraphQL endpoint is available at: `http://localhost:8000/graphql`
 
-## License
+To process queued jobs (for employee generation):
+```bash
+php artisan queue:work
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## How to Run Tests
+
+```bash
+php artisan test
+```
+
+This runs all 23 tests covering:
+- 6 authentication tests (login, refresh, logout, error cases)
+- 16 employee management tests (CRUD, search, pagination, access control, bulk operations)
+
+## GraphQL API Usage
+
+All API access is through a single endpoint: `POST /graphql`
+
+### Authentication Headers
+
+For authenticated requests, include the JWT token:
+```
+Authorization: Bearer <your-token>
+```
+
+### Authentication Mutations
+
+**Login**
+```graphql
+mutation {
+    login(email: "admin@example.com", password: "password") {
+        token
+    }
+}
+```
+
+**Refresh Token**
+```graphql
+mutation {
+    refreshToken {
+        token
+    }
+}
+```
+
+**Logout**
+```graphql
+mutation {
+    logout {
+        message
+    }
+}
+```
+
+### Employee Queries
+
+**View own profile** (Admin and Employee)
+```graphql
+query {
+    me {
+        id
+        first_name
+        last_name
+        email
+        phone
+        address
+        salary
+        system_role
+        job_role
+    }
+}
+```
+
+**View all employees** (Admin only)
+```graphql
+query {
+    employees(search: "john", page: 1) {
+        data {
+            id
+            first_name
+            last_name
+            email
+            salary
+            system_role
+            job_role
+        }
+        paginatorInfo {
+            count
+            currentPage
+            lastPage
+            total
+        }
+    }
+}
+```
+
+**View single employee** (Admin only)
+```graphql
+query {
+    employee(id: 1) {
+        id
+        first_name
+        last_name
+        email
+        phone
+        address
+        salary
+        system_role
+        job_role
+    }
+}
+```
+
+### Employee Mutations (Admin only)
+
+**Create employee**
+```graphql
+mutation {
+    createEmployee(input: {
+        first_name: "John"
+        last_name: "Doe"
+        email: "john@example.com"
+        phone: "555-0100"
+        address: "123 Main St"
+        salary: 75000
+        system_role: "employee"
+        job_role: "Software Engineer"
+        password: "password123"
+    }) {
+        id
+        first_name
+        last_name
+        email
+    }
+}
+```
+
+**Update employee**
+```graphql
+mutation {
+    updateEmployee(id: 2, input: {
+        first_name: "Jane"
+        salary: 85000
+    }) {
+        id
+        first_name
+        salary
+    }
+}
+```
+
+**Delete employee** (soft delete)
+```graphql
+mutation {
+    deleteEmployee(id: 2) {
+        message
+    }
+}
+```
+
+**Restore deleted employee**
+```graphql
+mutation {
+    restoreEmployee(id: 2) {
+        message
+    }
+}
+```
+
+### Bulk Operations (Admin only)
+
+**Generate test data** (dispatches queued job)
+```graphql
+mutation {
+    generateEmployees(count: 10000) {
+        job_id
+    }
+}
+```
+
+**Import employees from Excel**
+```graphql
+mutation($file: Upload!) {
+    importEmployees(file: $file) {
+        success_count
+        errors {
+            row
+            message
+        }
+    }
+}
+```
+> Upload an Excel file with columns: `first_name`, `last_name`, `email`, `phone`, `address`, `salary`, `system_role`, `job_role`. Existing employees matched by email will be updated; new emails will create new records.
+
+**Export employees to Excel**
+```graphql
+query {
+    exportEmployees {
+        url
+    }
+}
+```
+> Returns a URL to download the generated Excel file.
+
+### Access Control
+
+| Operation | Admin | Employee |
+|-----------|-------|----------|
+| `me` | Full profile | Full profile |
+| `employees` (list) | All employees | Denied |
+| `employee(id)` | Any employee | Denied |
+| Create/Update/Delete/Restore | Full access | Denied |
+| Generate/Import/Export | Full access | Denied |
+
+## Excel Import Format
+
+The Excel file must have a header row with the following columns:
+
+| Column | Required | Description |
+|--------|----------|-------------|
+| first_name | Yes | First name |
+| last_name | Yes | Last name |
+| email | Yes | Unique email address |
+| phone | No | Phone number |
+| address | No | Physical address |
+| salary | No | Numeric salary amount |
+| system_role | No | `admin` or `employee` (default: employee) |
+| job_role | No | Job title/position |
+
+A sample file can be generated using `php artisan sample:excel`.
+
+## Architecture Notes
+
+- **Single table design**: Users and employees share the same `users` table. The `system_role` column distinguishes admins from employees. The `job_role` column stores the employee's job title.
+- **Soft deletes**: Deleted employees are hidden from queries but remain in the database and can be restored. Deleted email addresses cannot be reused by new employees.
+- **Authorization**: Access control is handled within each resolver class by checking the authenticated user's `system_role`. Admin-only operations throw an "unauthorized" GraphQL error for non-admin users.
+- **Bulk generation**: The `generateEmployees` mutation dispatches a queued job that processes records in chunks of 500 to avoid memory issues.
+- **Excel import**: Uses row-level validation with `SkipsOnFailure`. Invalid rows are skipped and reported back with row numbers and error messages. Existing employees (matched by email) are updated; new emails create new records.

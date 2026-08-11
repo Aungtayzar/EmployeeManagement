@@ -1,0 +1,289 @@
+{
+  "info": {
+    "name": "Employee Management API - GraphQL",
+    "_postman_id": "b1a2c3d4-e5f6-7890-abcd-ef1234567890",
+    "description": "Postman collection for testing the Employee Management GraphQL API (Lighthouse + JWT). All requests target POST {{base}}/graphql. Use the 'login' request first; its test script saves the JWT to the collection variable `token` so all authenticated requests can use it.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base", "value": "http://employee-management-api.test", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "userId", "value": "1", "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{token}}", "type": "string" }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. login",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{base}}/graphql", "host": ["{{base}}"], "path": ["graphql"] },
+        "auth": { "type": "noauth" },
+        "body": {
+          "mode": "graphql",
+          "graphql": {
+            "query": "mutation login($email: String!, $password: String!) {\n  login(email: $email, password: $password) {\n    token\n  }\n}",
+            "variables": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"password\"\n}"
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json && json.data && json.data.login && json.data.login.token) {",
+              "  pm.collectionVariables.set('token', json.data.login.token);",
+              "  console.log('Token saved to collection variable');",
+              "} else {",
+              "  console.log('Login failed:', JSON.stringify(json));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. me",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{base}}/graphql", "host": ["{{base}}"], "path": ["graphql"] },
+        "body": {
+          "mode": "graphql",
+          "graphql": {
+            "query": "query me {\n  me {\n    id\n    first_name\n    last_name\n    email\n    phone\n    address\n    salary\n    system_role\n    job_role\n    created_at\n    updated_at\n  }\n}",
+            "variables": "{}"
+          }
+        }
+      }
+    },
+    {
+      "name": "3. refreshToken",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{base}}/graphql", "host": ["{{base}}"], "path": ["graphql"] },
+        "body": {
+          "mode": "graphql",
+          "graphql": {
+            "query": "mutation refreshToken {\n  refreshToken {\n    token\n  }\n}",
+            "variables": "{}"
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json && json.data && json.data.refreshToken && json.data.refreshToken.token) {",
+              "  pm.collectionVariables.set('token', json.data.refreshToken.token);",
+              "  console.log('Refreshed token saved to collection variable');",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. logout",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{base}}/graphql", "host": ["{{base}}"], "path": ["graphql"] },
+        "body": {
+          "mode": "graphql",
+          "graphql": {
+            "query": "mutation logout {\n  logout {\n    message\n  }\n}",
+            "variables": "{}"
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set('token', '');",
+              "console.log('Token cleared after logout');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. createEmployee",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{base}}/graphql", "host": ["{{base}}"], "path": ["graphql"] },
+        "body": {
+          "mode": "graphql",
+          "graphql": {
+            "query": "mutation createEmployee($input: CreateEmployeeInput!) {\n  createEmployee(input: $input) {\n    id\n    first_name\n    last_name\n    email\n    phone\n    address\n    salary\n    system_role\n    job_role\n    created_at\n    updated_at\n  }\n}",
+            "variables": "{\n  \"input\": {\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"phone\": \"+1234567890\",\n    \"address\": \"123 Main St\",\n    \"salary\": 5000.00,\n    \"system_role\": \"employee\",\n    \"job_role\": \"Developer\",\n    \"password\": \"secret123\"\n  }\n}"
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json && json.data && json.data.createEmployee && json.data.createEmployee.id) {",
+              "  pm.collectionVariables.set('userId', json.data.createEmployee.id);",
+              "  console.log('Created user id saved:', json.data.createEmployee.id);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. employee",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{base}}/graphql", "host": ["{{base}}"], "path": ["graphql"] },
+        "body": {
+          "mode": "graphql",
+          "graphql": {
+            "query": "query employee($id: ID!) {\n  employee(id: $id) {\n    id\n    first_name\n    last_name\n    email\n    phone\n    address\n    salary\n    system_role\n    job_role\n    created_at\n    updated_at\n    deleted_at\n  }\n}",
+            "variables": "{\n  \"id\": \"{{userId}}\"\n}"
+          }
+        }
+      }
+    },
+    {
+      "name": "7. employees (paginated)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{base}}/graphql", "host": ["{{base}}"], "path": ["graphql"] },
+        "body": {
+          "mode": "graphql",
+          "graphql": {
+            "query": "query employees($search: String, $page: Int) {\n  employees(search: $search, page: $page) {\n    data {\n      id\n      first_name\n      last_name\n      email\n      system_role\n      job_role\n      salary\n    }\n    paginatorInfo {\n      count\n      currentPage\n      lastPage\n      total\n    }\n  }\n}",
+            "variables": "{\n  \"search\": null,\n  \"page\": 1\n}"
+          }
+        }
+      }
+    },
+    {
+      "name": "8. updateEmployee",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{base}}/graphql", "host": ["{{base}}"], "path": ["graphql"] },
+        "body": {
+          "mode": "graphql",
+          "graphql": {
+            "query": "mutation updateEmployee($id: ID!, $input: UpdateEmployeeInput!) {\n  updateEmployee(id: $id, input: $input) {\n    id\n    first_name\n    last_name\n    email\n    phone\n    address\n    salary\n    system_role\n    job_role\n    updated_at\n  }\n}",
+            "variables": "{\n  \"id\": \"{{userId}}\",\n  \"input\": {\n    \"first_name\": \"Johnny\",\n    \"salary\": 6500.00,\n    \"job_role\": \"Senior Developer\"\n  }\n}"
+          }
+        }
+      }
+    },
+    {
+      "name": "9. deleteEmployee",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{base}}/graphql", "host": ["{{base}}"], "path": ["graphql"] },
+        "body": {
+          "mode": "graphql",
+          "graphql": {
+            "query": "mutation deleteEmployee($id: ID!) {\n  deleteEmployee(id: $id) {\n    message\n  }\n}",
+            "variables": "{\n  \"id\": \"{{userId}}\"\n}"
+          }
+        }
+      }
+    },
+    {
+      "name": "10. restoreEmployee",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{base}}/graphql", "host": ["{{base}}"], "path": ["graphql"] },
+        "body": {
+          "mode": "graphql",
+          "graphql": {
+            "query": "mutation restoreEmployee($id: ID!) {\n  restoreEmployee(id: $id) {\n    message\n  }\n}",
+            "variables": "{\n  \"id\": \"{{userId}}\"\n}"
+          }
+        }
+      }
+    },
+    {
+      "name": "11. generateEmployees",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{base}}/graphql", "host": ["{{base}}"], "path": ["graphql"] },
+        "body": {
+          "mode": "graphql",
+          "graphql": {
+            "query": "mutation generateEmployees($count: Int!) {\n  generateEmployees(count: $count) {\n    job_id\n  }\n}",
+            "variables": "{\n  \"count\": 10\n}"
+          }
+        }
+      }
+    },
+    {
+      "name": "12. exportEmployees",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{base}}/graphql", "host": ["{{base}}"], "path": ["graphql"] },
+        "body": {
+          "mode": "graphql",
+          "graphql": {
+            "query": "query exportEmployees {\n  exportEmployees {\n    url\n  }\n}",
+            "variables": "{}"
+          }
+        }
+      }
+    },
+    {
+      "name": "13. importEmployees (multipart)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": { "raw": "{{base}}/graphql", "host": ["{{base}}"], "path": ["graphql"] },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "operations",
+              "type": "text",
+              "value": "{\"query\":\"mutation($file: Upload!){ importEmployees(file:$file){ success_count errors { row message } } }\",\"variables\":{\"file\":null}}"
+            },
+            {
+              "key": "map",
+              "type": "text",
+              "value": "{\"0\":[\"variables.file\"]}"
+            },
+            {
+              "key": "0",
+              "type": "file",
+              "src": ""
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
