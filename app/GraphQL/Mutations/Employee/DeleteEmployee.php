@@ -15,8 +15,12 @@ class DeleteEmployee
             throw new \GraphQL\Error\Error('This action is unauthorized.');
         }
 
-        $employee = Employee::findOrFail($args['id']);
+        $employee = Employee::with('user')->findOrFail($args['id']);
         $employee->delete();
+
+        if ($employee->user) {
+            $employee->user->delete();
+        }
 
         return ['message' => 'Employee removed successfully.'];
     }

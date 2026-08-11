@@ -16,7 +16,7 @@ class DatabaseSeeder extends Seeder
             'password' => bcrypt('password'),
         ]);
 
-        $total = 10000;
+        $total = 10;
         $chunkSize = 500;
 
         for ($i = 0; $i < $total; $i += $chunkSize) {

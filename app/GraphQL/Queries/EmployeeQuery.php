@@ -3,6 +3,7 @@
 namespace App\GraphQL\Queries;
 
 use App\Models\Employee;
+use GraphQL\Error\Error;
 use Illuminate\Support\Facades\Auth;
 
 class EmployeeQuery
@@ -12,9 +13,15 @@ class EmployeeQuery
         $authUser = Auth::guard('api')->user();
 
         if (! $authUser || ! $authUser->isAdmin()) {
-            throw new \GraphQL\Error\Error('This action is unauthorized.');
+            throw new Error('This action is unauthorized.');
         }
 
-        return Employee::with('user')->findOrFail($args['id']);
+        $employee = Employee::with('user')->find($args['id']);
+
+        if (! $employee) {
+            throw new Error('Employee not found.');
+        }
+
+        return $employee;
     }
 }

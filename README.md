@@ -155,14 +155,17 @@ mutation {
 query {
     me {
         id
-        first_name
-        last_name
         email
-        phone
-        address
-        salary
         system_role
-        job_role
+        employee {
+            first_name
+            last_name
+            phone
+            address
+            salary
+            job_role
+            join_date
+        }
     }
 }
 ```

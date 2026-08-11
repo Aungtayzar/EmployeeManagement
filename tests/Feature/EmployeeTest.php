@@ -328,6 +328,7 @@ class EmployeeTest extends TestCase
         ]);
 
         $this->assertNotNull(Employee::withTrashed()->find($employee->id)->deleted_at);
+        $this->assertNotNull(User::withTrashed()->find($employee->user_id)->deleted_at);
 
         $restoreResponse = $this->graphQL(/** @lang GraphQL */ '
             mutation($id: ID!) {
@@ -346,6 +347,7 @@ class EmployeeTest extends TestCase
         ]);
 
         $this->assertNull(Employee::find($employee->id)->deleted_at);
+        $this->assertNull(User::find($employee->user_id)->deleted_at);
     }
 
     public function test_admin_can_export_employees(): void
