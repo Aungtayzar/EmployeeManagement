@@ -2,9 +2,11 @@
 
 namespace App\GraphQL\Mutations\Employee;
 
-use App\Imports\EmployeesImport;
+use App\GraphQL\Queries\EmployeeTransferTaskQuery;
+use App\Jobs\ImportEmployeesJob;
+use App\Models\EmployeeTransferTask;
+use GraphQL\Error\Error;
 use Illuminate\Support\Facades\Auth;
-use Maatwebsite\Excel\Facades\Excel;
 
 class ImportEmployees
 {
@@ -13,27 +15,20 @@ class ImportEmployees
         $authUser = Auth::guard('api')->user();
 
         if (! $authUser || ! $authUser->isAdmin()) {
-            throw new \GraphQL\Error\Error('This action is unauthorized.');
+            throw new Error('This action is unauthorized.');
         }
 
-        $file = $args['file'];
+        $path = $args['file']->store('imports', 'local');
 
-        $import = new EmployeesImport;
-        Excel::import($import, $file);
+        $task = EmployeeTransferTask::create([
+            'user_id' => $authUser->id,
+            'type' => 'import',
+            'status' => 'pending',
+            'input_path' => $path,
+        ]);
 
-        $failures = $import->failures();
-        $errors = [];
+        ImportEmployeesJob::dispatch($task->id);
 
-        foreach ($failures as $failure) {
-            $errors[] = [
-                'row' => $failure->row(),
-                'message' => implode(', ', $failure->errors()),
-            ];
-        }
-
-        return [
-            'success_count' => $import->getRowCount() - count($failures),
-            'errors' => $errors,
-        ];
+        return EmployeeTransferTaskQuery::payload($task);
     }
 }

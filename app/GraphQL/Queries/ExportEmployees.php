@@ -2,10 +2,10 @@
 
 namespace App\GraphQL\Queries;
 
-use App\Exports\EmployeesExport;
+use App\Jobs\ExportEmployeesJob;
+use App\Models\EmployeeTransferTask;
+use GraphQL\Error\Error;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
-use Maatwebsite\Excel\Facades\Excel;
 
 class ExportEmployees
 {
@@ -14,16 +14,17 @@ class ExportEmployees
         $authUser = Auth::guard('api')->user();
 
         if (! $authUser || ! $authUser->isAdmin()) {
-            throw new \GraphQL\Error\Error('This action is unauthorized.');
+            throw new Error('This action is unauthorized.');
         }
 
-        $filename = 'employees-' . Str::random(16) . '.xlsx';
-        $path = 'exports/' . $filename;
+        $task = EmployeeTransferTask::create([
+            'user_id' => $authUser->id,
+            'type' => 'export',
+            'status' => 'pending',
+        ]);
 
-        Excel::store(new EmployeesExport, $path, 'local');
+        ExportEmployeesJob::dispatch($task->id);
 
-        return [
-            'url' => route('download.export', ['filename' => $filename]),
-        ];
+        return EmployeeTransferTaskQuery::payload($task);
     }
 }

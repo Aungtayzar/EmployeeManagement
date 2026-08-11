@@ -9,6 +9,6 @@ class MeQuery
 {
     public function resolve($root, array $args): ?User
     {
-        return Auth::guard('api')->user();
+        return Auth::guard('api')->user()?->load('employee');
     }
 }

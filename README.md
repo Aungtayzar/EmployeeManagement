@@ -9,8 +9,8 @@ This system provides:
 - Role-based access control (Admin and Employee roles)
 - Full employee CRUD with soft deletes (recoverable removal)
 - Bulk employee generation (10,000 records) via queued job
-- Excel import for bulk updates with row-level validation
-- Excel export of all employee records
+- Queued Excel imports with row-level validation and persisted results
+- Queued Excel exports with task-status polling and download links
 - Paginated employee listing with search by name or email
 
 ## Tech Stack
@@ -87,7 +87,7 @@ php artisan serve
 
 The GraphQL endpoint is available at: `http://localhost:8000/graphql`
 
-To process queued jobs (for employee generation):
+To process queued jobs (employee generation, imports, and exports):
 ```bash
 php artisan queue:work
 ```
@@ -98,9 +98,15 @@ php artisan queue:work
 php artisan test
 ```
 
-This runs all 23 tests covering:
-- 6 authentication tests (login, refresh, logout, error cases)
-- 16 employee management tests (CRUD, search, pagination, access control, bulk operations)
+This runs the authentication and employee-management feature tests, including queued export task creation and task-status retrieval.
+
+## Postman Collection
+
+The ready-to-import collection is available at [`postman/employee-management-api.postman_collection.json`](postman/employee-management-api.postman_collection.json).
+
+Import it into Postman, set the `base` collection variable if your application is not running at `http://employee-management-api.test`, then run **1. login**. The collection stores the JWT automatically for authenticated requests.
+
+For imports, select an `.xlsx` file in **13. importEmployees (multipart)**. Both import and export requests save their returned task ID to `transferTaskId`; use **14. employeeTransferTask (poll status)** until `status` is `completed` or `failed`. A completed export includes its download `url`.
 
 ## GraphQL API Usage
 
@@ -272,25 +278,48 @@ mutation {
 ```graphql
 mutation($file: Upload!) {
     importEmployees(file: $file) {
+        id
+        status
         success_count
         errors {
             row
             message
         }
+        error_message
     }
 }
 ```
-> Upload an Excel file with columns: `first_name`, `last_name`, `email`, `phone`, `address`, `salary`, `system_role`, `job_role`. Existing employees matched by email will be updated; new emails will create new records.
+> This queues the import and immediately returns a task with `status: pending`. Upload an Excel file with columns: `first_name`, `last_name`, `email`, `phone`, `address`, `salary`, `system_role`, `job_role`. Existing employees matched by email will be updated; new emails will create new records.
 
 **Export employees to Excel**
 ```graphql
 query {
     exportEmployees {
+        id
+        status
         url
     }
 }
 ```
-> Returns a URL to download the generated Excel file.
+> This queues the export. `url` is `null` until the task completes.
+
+**Check import or export task status**
+```graphql
+query($id: ID!) {
+    employeeTransferTask(id: $id) {
+        id
+        type
+        status
+        success_count
+        errors {
+            row
+            message
+        }
+        error_message
+        url
+    }
+}
+```
 
 ### Access Control
 
@@ -321,8 +350,8 @@ A sample file can be generated using `php artisan sample:excel`.
 
 ## Architecture Notes
 
-- **Single table design**: Users and employees share the same `users` table. The `system_role` column distinguishes admins from employees. The `job_role` column stores the employee's job title.
+- **User and employee records**: Authentication and roles are stored on `users`; employee profile information is stored on `employees`.
 - **Soft deletes**: Deleted employees are hidden from queries but remain in the database and can be restored. Deleted email addresses cannot be reused by new employees.
 - **Authorization**: Access control is handled within each resolver class by checking the authenticated user's `system_role`. Admin-only operations throw an "unauthorized" GraphQL error for non-admin users.
 - **Bulk generation**: The `generateEmployees` mutation dispatches a queued job that processes records in chunks of 500 to avoid memory issues.
-- **Excel import**: Uses row-level validation with `SkipsOnFailure`. Invalid rows are skipped and reported back with row numbers and error messages. Existing employees (matched by email) are updated; new emails create new records.
+- **Excel transfers**: Imports and exports run in queued jobs. Each request creates an `employee_transfer_tasks` record; poll `employeeTransferTask` for status, validation errors, and the completed export URL.

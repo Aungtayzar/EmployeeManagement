@@ -2,12 +2,12 @@
 
 namespace App\GraphQL\Queries;
 
-use App\Models\User;
+use App\Models\Employee;
 use Illuminate\Support\Facades\Auth;
 
 class EmployeeQuery
 {
-    public function resolve($root, array $args): User
+    public function resolve($root, array $args): Employee
     {
         $authUser = Auth::guard('api')->user();
 
@@ -15,6 +15,6 @@ class EmployeeQuery
             throw new \GraphQL\Error\Error('This action is unauthorized.');
         }
 
-        return User::findOrFail($args['id']);
+        return Employee::with('user')->findOrFail($args['id']);
     }
 }

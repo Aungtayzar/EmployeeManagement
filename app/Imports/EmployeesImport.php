@@ -2,16 +2,18 @@
 
 namespace App\Imports;
 
+use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Validators\Failure;
 
-class EmployeesImport implements ToCollection, WithHeadingRow, WithValidation, SkipsOnFailure
+class EmployeesImport implements SkipsOnFailure, ToCollection, WithChunkReading, WithHeadingRow, WithValidation
 {
     protected int $rowCount = 0;
 
@@ -29,25 +31,49 @@ class EmployeesImport implements ToCollection, WithHeadingRow, WithValidation, S
 
             if ($user) {
                 $user->update([
-                    'first_name' => $row['first_name'],
-                    'last_name' => $row['last_name'],
-                    'phone' => $row['phone'] ?? $user->phone,
-                    'address' => $row['address'] ?? $user->address,
-                    'salary' => $row['salary'] ?? $user->salary,
                     'system_role' => $row['system_role'] ?? $user->system_role,
-                    'job_role' => $row['job_role'] ?? $user->job_role,
                 ]);
+
+                $employee = Employee::where('user_id', $user->id)->first();
+
+                if ($employee) {
+                    $employee->update([
+                        'first_name' => $row['first_name'],
+                        'last_name' => $row['last_name'],
+                        'phone' => $row['phone'] ?? $employee->phone,
+                        'address' => $row['address'] ?? $employee->address,
+                        'salary' => $row['salary'] ?? $employee->salary,
+                        'job_role' => $row['job_role'] ?? $employee->job_role,
+                        'join_date' => $row['join_date'] ?? $employee->join_date,
+                    ]);
+                } else {
+                    Employee::create([
+                        'user_id' => $user->id,
+                        'first_name' => $row['first_name'],
+                        'last_name' => $row['last_name'],
+                        'phone' => $row['phone'] ?? null,
+                        'address' => $row['address'] ?? null,
+                        'salary' => $row['salary'] ?? 0,
+                        'job_role' => $row['job_role'] ?? null,
+                        'join_date' => $row['join_date'] ?? null,
+                    ]);
+                }
             } else {
-                User::create([
+                $user = User::create([
+                    'email' => $row['email'],
+                    'password' => Hash::make('password'),
+                    'system_role' => $row['system_role'] ?? 'employee',
+                ]);
+
+                Employee::create([
+                    'user_id' => $user->id,
                     'first_name' => $row['first_name'],
                     'last_name' => $row['last_name'],
-                    'email' => $row['email'],
                     'phone' => $row['phone'] ?? null,
                     'address' => $row['address'] ?? null,
                     'salary' => $row['salary'] ?? 0,
-                    'system_role' => $row['system_role'] ?? 'employee',
                     'job_role' => $row['job_role'] ?? null,
-                    'password' => Hash::make('password'),
+                    'join_date' => $row['join_date'] ?? null,
                 ]);
             }
         }
@@ -79,5 +105,10 @@ class EmployeesImport implements ToCollection, WithHeadingRow, WithValidation, S
     public function getRowCount(): int
     {
         return $this->rowCount;
+    }
+
+    public function chunkSize(): int
+    {
+        return 500;
     }
 }

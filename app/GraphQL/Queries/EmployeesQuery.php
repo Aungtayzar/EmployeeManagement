@@ -2,7 +2,7 @@
 
 namespace App\GraphQL\Queries;
 
-use App\Models\User;
+use App\Models\Employee;
 use Illuminate\Support\Facades\Auth;
 
 class EmployeesQuery
@@ -15,14 +15,16 @@ class EmployeesQuery
             throw new \GraphQL\Error\Error('This action is unauthorized.');
         }
 
-        $query = User::query();
+        $query = Employee::with('user');
 
         if (! empty($args['search'])) {
             $search = $args['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%{$search}%")
                     ->orWhere('last_name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhereHas('user', function ($uq) use ($search) {
+                        $uq->where('email', 'like', "%{$search}%");
+                    });
             });
         }
 

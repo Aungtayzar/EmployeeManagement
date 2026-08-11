@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -15,15 +16,9 @@ class User extends Authenticatable implements JWTSubject
     use HasFactory, Notifiable, SoftDeletes;
 
     protected $fillable = [
-        'first_name',
-        'last_name',
         'email',
         'password',
-        'phone',
-        'address',
-        'salary',
         'system_role',
-        'job_role',
     ];
 
     protected $hidden = [
@@ -36,8 +31,12 @@ class User extends Authenticatable implements JWTSubject
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'salary' => 'decimal:2',
         ];
+    }
+
+    public function employee(): HasOne
+    {
+        return $this->hasOne(Employee::class);
     }
 
     public function getJWTIdentifier()

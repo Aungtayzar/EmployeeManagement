@@ -8,7 +8,8 @@
   "variable": [
     { "key": "base", "value": "http://employee-management-api.test", "type": "string" },
     { "key": "token", "value": "", "type": "string" },
-    { "key": "userId", "value": "1", "type": "string" }
+    { "key": "employeeId", "value": "1", "type": "string" },
+    { "key": "transferTaskId", "value": "", "type": "string" }
   ],
   "auth": {
     "type": "bearer",
@@ -59,7 +60,7 @@
         "body": {
           "mode": "graphql",
           "graphql": {
-            "query": "query me {\n  me {\n    id\n    first_name\n    last_name\n    email\n    phone\n    address\n    salary\n    system_role\n    job_role\n    created_at\n    updated_at\n  }\n}",
+            "query": "query me {\n  me {\n    id\n    email\n    system_role\n    employee {\n      id\n      first_name\n      last_name\n      phone\n      address\n      salary\n      job_role\n      join_date\n    }\n    created_at\n    updated_at\n  }\n}",
             "variables": "{}"
           }
         }
@@ -131,8 +132,8 @@
         "body": {
           "mode": "graphql",
           "graphql": {
-            "query": "mutation createEmployee($input: CreateEmployeeInput!) {\n  createEmployee(input: $input) {\n    id\n    first_name\n    last_name\n    email\n    phone\n    address\n    salary\n    system_role\n    job_role\n    created_at\n    updated_at\n  }\n}",
-            "variables": "{\n  \"input\": {\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"phone\": \"+1234567890\",\n    \"address\": \"123 Main St\",\n    \"salary\": 5000.00,\n    \"system_role\": \"employee\",\n    \"job_role\": \"Developer\",\n    \"password\": \"secret123\"\n  }\n}"
+            "query": "mutation createEmployee($input: CreateEmployeeInput!) {\n  createEmployee(input: $input) {\n    id\n    first_name\n    last_name\n    email\n    phone\n    address\n    salary\n    system_role\n    job_role\n    join_date\n    created_at\n    updated_at\n  }\n}",
+            "variables": "{\n  \"input\": {\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"phone\": \"+1234567890\",\n    \"address\": \"123 Main St\",\n    \"salary\": 5000.00,\n    \"system_role\": \"employee\",\n    \"job_role\": \"Developer\",\n    \"join_date\": \"2024-01-15\",\n    \"password\": \"secret123\"\n  }\n}"
           }
         }
       },
@@ -144,8 +145,8 @@
             "exec": [
               "const json = pm.response.json();",
               "if (json && json.data && json.data.createEmployee && json.data.createEmployee.id) {",
-              "  pm.collectionVariables.set('userId', json.data.createEmployee.id);",
-              "  console.log('Created user id saved:', json.data.createEmployee.id);",
+              "  pm.collectionVariables.set('employeeId', json.data.createEmployee.id);",
+              "  console.log('Created employee id saved:', json.data.createEmployee.id);",
               "}"
             ]
           }
@@ -161,8 +162,8 @@
         "body": {
           "mode": "graphql",
           "graphql": {
-            "query": "query employee($id: ID!) {\n  employee(id: $id) {\n    id\n    first_name\n    last_name\n    email\n    phone\n    address\n    salary\n    system_role\n    job_role\n    created_at\n    updated_at\n    deleted_at\n  }\n}",
-            "variables": "{\n  \"id\": \"{{userId}}\"\n}"
+            "query": "query employee($id: ID!) {\n  employee(id: $id) {\n    id\n    user_id\n    first_name\n    last_name\n    email\n    phone\n    address\n    salary\n    system_role\n    job_role\n    join_date\n    created_at\n    updated_at\n    deleted_at\n  }\n}",
+            "variables": "{\n  \"id\": \"{{employeeId}}\"\n}"
           }
         }
       }
@@ -191,8 +192,8 @@
         "body": {
           "mode": "graphql",
           "graphql": {
-            "query": "mutation updateEmployee($id: ID!, $input: UpdateEmployeeInput!) {\n  updateEmployee(id: $id, input: $input) {\n    id\n    first_name\n    last_name\n    email\n    phone\n    address\n    salary\n    system_role\n    job_role\n    updated_at\n  }\n}",
-            "variables": "{\n  \"id\": \"{{userId}}\",\n  \"input\": {\n    \"first_name\": \"Johnny\",\n    \"salary\": 6500.00,\n    \"job_role\": \"Senior Developer\"\n  }\n}"
+            "query": "mutation updateEmployee($id: ID!, $input: UpdateEmployeeInput!) {\n  updateEmployee(id: $id, input: $input) {\n    id\n    first_name\n    last_name\n    email\n    phone\n    address\n    salary\n    system_role\n    job_role\n    join_date\n    updated_at\n  }\n}",
+            "variables": "{\n  \"id\": \"{{employeeId}}\",\n  \"input\": {\n    \"first_name\": \"Johnny\",\n    \"salary\": 6500.00,\n    \"job_role\": \"Senior Developer\"\n  }\n}"
           }
         }
       }
@@ -207,7 +208,7 @@
           "mode": "graphql",
           "graphql": {
             "query": "mutation deleteEmployee($id: ID!) {\n  deleteEmployee(id: $id) {\n    message\n  }\n}",
-            "variables": "{\n  \"id\": \"{{userId}}\"\n}"
+            "variables": "{\n  \"id\": \"{{employeeId}}\"\n}"
           }
         }
       }
@@ -222,7 +223,7 @@
           "mode": "graphql",
           "graphql": {
             "query": "mutation restoreEmployee($id: ID!) {\n  restoreEmployee(id: $id) {\n    message\n  }\n}",
-            "variables": "{\n  \"id\": \"{{userId}}\"\n}"
+            "variables": "{\n  \"id\": \"{{employeeId}}\"\n}"
           }
         }
       }
@@ -251,11 +252,26 @@
         "body": {
           "mode": "graphql",
           "graphql": {
-            "query": "query exportEmployees {\n  exportEmployees {\n    url\n  }\n}",
+            "query": "query exportEmployees {\n  exportEmployees {\n    id\n    status\n    url\n  }\n}",
             "variables": "{}"
           }
         }
-      }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const task = pm.response.json()?.data?.exportEmployees;",
+              "if (task?.id) {",
+              "  pm.collectionVariables.set('transferTaskId', task.id);",
+              "  console.log('Export task id saved:', task.id);",
+              "}"
+            ]
+          }
+        }
+      ]
     },
     {
       "name": "13. importEmployees (multipart)",
@@ -269,7 +285,7 @@
             {
               "key": "operations",
               "type": "text",
-              "value": "{\"query\":\"mutation($file: Upload!){ importEmployees(file:$file){ success_count errors { row message } } }\",\"variables\":{\"file\":null}}"
+              "value": "{\"query\":\"mutation($file: Upload!){ importEmployees(file:$file){ id status success_count errors { row message } error_message } }\",\"variables\":{\"file\":null}}"
             },
             {
               "key": "map",
@@ -282,6 +298,36 @@
               "src": ""
             }
           ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const task = pm.response.json()?.data?.importEmployees;",
+              "if (task?.id) {",
+              "  pm.collectionVariables.set('transferTaskId', task.id);",
+              "  console.log('Import task id saved:', task.id);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14. employeeTransferTask (poll status)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{base}}/graphql", "host": ["{{base}}"], "path": ["graphql"] },
+        "body": {
+          "mode": "graphql",
+          "graphql": {
+            "query": "query employeeTransferTask($id: ID!) {\n  employeeTransferTask(id: $id) {\n    id\n    type\n    status\n    success_count\n    errors {\n      row\n      message\n    }\n    error_message\n    url\n  }\n}",
+            "variables": "{\n  \"id\": \"{{transferTaskId}}\"\n}"
+          }
         }
       }
     }

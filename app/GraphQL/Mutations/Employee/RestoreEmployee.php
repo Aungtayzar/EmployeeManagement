@@ -2,7 +2,7 @@
 
 namespace App\GraphQL\Mutations\Employee;
 
-use App\Models\User;
+use App\Models\Employee;
 use Illuminate\Support\Facades\Auth;
 
 class RestoreEmployee
@@ -15,8 +15,8 @@ class RestoreEmployee
             throw new \GraphQL\Error\Error('This action is unauthorized.');
         }
 
-        $user = User::withTrashed()->findOrFail($args['id']);
-        $user->restore();
+        $employee = Employee::withTrashed()->findOrFail($args['id']);
+        $employee->restore();
 
         return ['message' => 'Employee restored successfully.'];
     }

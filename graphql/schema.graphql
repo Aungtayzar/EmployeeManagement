@@ -1,8 +1,20 @@
 scalar Upload @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\Upload")
 scalar DateTime @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\DateTime")
+scalar Date @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\Date")
 
 type User {
     id: ID!
+    email: String!
+    system_role: String!
+    employee: Employee
+    created_at: DateTime!
+    updated_at: DateTime!
+    deleted_at: DateTime
+}
+
+type Employee {
+    id: ID!
+    user_id: ID!
     first_name: String!
     last_name: String!
     email: String!
@@ -11,6 +23,7 @@ type User {
     salary: Float!
     system_role: String!
     job_role: String
+    join_date: Date
     created_at: DateTime!
     updated_at: DateTime!
     deleted_at: DateTime
@@ -29,8 +42,11 @@ type JobPayload {
 }
 
 type ImportResult {
+    id: ID!
+    status: String!
     success_count: Int!
     errors: [ImportError!]!
+    error_message: String
 }
 
 type ImportError {
@@ -39,7 +55,19 @@ type ImportError {
 }
 
 type ExportPayload {
-    url: String!
+    id: ID!
+    status: String!
+    url: String
+}
+
+type EmployeeTransferTask {
+    id: ID!
+    type: String!
+    status: String!
+    success_count: Int!
+    errors: [ImportError!]!
+    error_message: String
+    url: String
 }
 
 input CreateEmployeeInput {
@@ -51,6 +79,7 @@ input CreateEmployeeInput {
     salary: Float @rules(apply: ["required", "numeric", "min:0"])
     system_role: String @rules(apply: ["required", "in:admin,employee"])
     job_role: String @rules(apply: ["nullable", "string", "max:255"])
+    join_date: Date @rules(apply: ["nullable", "date"])
     password: String @rules(apply: ["required", "string", "min:6"])
 }
 
@@ -63,13 +92,14 @@ input UpdateEmployeeInput {
     salary: Float @rules(apply: ["numeric", "min:0"])
     system_role: String @rules(apply: ["in:admin,employee"])
     job_role: String @rules(apply: ["nullable", "string", "max:255"])
+    join_date: Date @rules(apply: ["nullable", "date"])
     password: String @rules(apply: ["string", "min:6"])
 }
 
 type Query {
     me: User! @guard @auth
 
-    employee(id: ID!): User!
+    employee(id: ID!): Employee!
         @field(resolver: "App\\GraphQL\\Queries\\EmployeeQuery@resolve")
 
     employees(search: String, page: Int): EmployeePagination!
@@ -77,6 +107,9 @@ type Query {
 
     exportEmployees: ExportPayload!
         @field(resolver: "App\\GraphQL\\Queries\\ExportEmployees@resolve")
+
+    employeeTransferTask(id: ID!): EmployeeTransferTask!
+        @field(resolver: "App\\GraphQL\\Queries\\EmployeeTransferTaskQuery@resolve")
 }
 
 type Mutation {
@@ -90,10 +123,10 @@ type Mutation {
         @field(resolver: "App\\GraphQL\\Mutations\\Auth\\Logout@resolve")
         @guard(with: ["api"])
 
-    createEmployee(input: CreateEmployeeInput! @spread): User!
+    createEmployee(input: CreateEmployeeInput! @spread): Employee!
         @field(resolver: "App\\GraphQL\\Mutations\\Employee\\CreateEmployee@resolve")
 
-    updateEmployee(id: ID!, input: UpdateEmployeeInput! @spread): User!
+    updateEmployee(id: ID!, input: UpdateEmployeeInput! @spread): Employee!
         @field(resolver: "App\\GraphQL\\Mutations\\Employee\\UpdateEmployee@resolve")
 
     deleteEmployee(id: ID!): MessagePayload!
@@ -117,6 +150,6 @@ type PaginatorInfo {
 }
 
 type EmployeePagination {
-    data: [User!]!
+    data: [Employee!]!
     paginatorInfo: PaginatorInfo!
 }

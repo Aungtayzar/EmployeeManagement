@@ -12,12 +12,12 @@ class GenerateSampleExcel extends Command
 
     public function handle(): int
     {
-        $headers = ['first_name', 'last_name', 'email', 'phone', 'address', 'salary', 'system_role', 'job_role'];
+        $headers = ['first_name', 'last_name', 'email', 'phone', 'address', 'salary', 'system_role', 'job_role', 'join_date'];
 
         $rows = [
-            ['John', 'Doe', 'john.doe@example.com', '555-0100', '123 Main St, New York, NY', '75000', 'employee', 'Software Engineer'],
-            ['Jane', 'Smith', 'jane.smith@example.com', '555-0101', '456 Oak Ave, Los Angeles, CA', '82000', 'employee', 'Product Manager'],
-            ['Bob', 'Johnson', 'bob.johnson@example.com', '555-0102', '789 Pine Rd, Chicago, IL', '65000', 'employee', 'Designer'],
+            ['John', 'Doe', 'john.doe@example.com', '555-0100', '123 Main St, New York, NY', '75000', 'employee', 'Software Engineer', '2024-01-15'],
+            ['Jane', 'Smith', 'jane.smith@example.com', '555-0101', '456 Oak Ave, Los Angeles, CA', '82000', 'employee', 'Product Manager', '2023-06-01'],
+            ['Bob', 'Johnson', 'bob.johnson@example.com', '555-0102', '789 Pine Rd, Chicago, IL', '65000', 'employee', 'Designer', '2024-03-20'],
         ];
 
         $path = storage_path('app/sample-import-template.xlsx');
