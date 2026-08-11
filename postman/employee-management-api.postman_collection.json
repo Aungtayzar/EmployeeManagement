@@ -177,8 +177,8 @@
         "body": {
           "mode": "graphql",
           "graphql": {
-            "query": "query employees($search: String, $page: Int) {\n  employees(search: $search, page: $page) {\n    data {\n      id\n      first_name\n      last_name\n      email\n      system_role\n      job_role\n      salary\n    }\n    paginatorInfo {\n      count\n      currentPage\n      lastPage\n      total\n    }\n  }\n}",
-            "variables": "{\n  \"search\": null,\n  \"page\": 1\n}"
+            "query": "query employees($search: String, $page: Int, $join_date_from: Date, $join_date_to: Date, $salary_min: Float, $salary_max: Float) {\n  employees(search: $search, page: $page, join_date_from: $join_date_from, join_date_to: $join_date_to, salary_min: $salary_min, salary_max: $salary_max) {\n    data {\n      id\n      first_name\n      last_name\n      email\n      system_role\n      job_role\n      salary\n      join_date\n    }\n    paginatorInfo {\n      count\n      currentPage\n      lastPage\n      total\n    }\n  }\n}",
+            "variables": "{\n  \"search\": null,\n  \"join_date_from\": null,\n  \"join_date_to\": null,\n  \"salary_min\": null,\n  \"salary_max\": null,\n  \"page\": 1\n}"
           }
         }
       }

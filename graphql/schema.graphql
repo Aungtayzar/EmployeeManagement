@@ -102,7 +102,7 @@ type Query {
     employee(id: ID!): Employee!
         @field(resolver: "App\\GraphQL\\Queries\\EmployeeQuery@resolve")
 
-    employees(search: String, page: Int): EmployeePagination!
+    employees(search: String, page: Int, join_date_from: Date, join_date_to: Date, salary_min: Float, salary_max: Float): EmployeePagination!
         @field(resolver: "App\\GraphQL\\Queries\\EmployeesQuery@resolve")
 
     exportEmployees: ExportPayload!

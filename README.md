@@ -11,7 +11,7 @@ This system provides:
 - Bulk employee generation (10,000 records) via queued job
 - Queued Excel imports with row-level validation and persisted results
 - Queued Excel exports with task-status polling and download links
-- Paginated employee listing with search by name or email
+- Paginated employee listing with search by name or email, join date range, and salary range filters
 
 ## Tech Stack
 
@@ -170,7 +170,14 @@ query {
 **View all employees** (Admin only)
 ```graphql
 query {
-    employees(search: "john", page: 1) {
+    employees(
+        search: "john",
+        join_date_from: "2024-01-01",
+        join_date_to: "2024-12-31",
+        salary_min: 3000,
+        salary_max: 8000,
+        page: 1
+    ) {
         data {
             id
             first_name
@@ -179,6 +186,7 @@ query {
             salary
             system_role
             job_role
+            join_date
         }
         paginatorInfo {
             count

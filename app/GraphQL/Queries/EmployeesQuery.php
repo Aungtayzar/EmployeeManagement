@@ -28,6 +28,22 @@ class EmployeesQuery
             });
         }
 
+        if (! empty($args['join_date_from'])) {
+            $query->where('join_date', '>=', $args['join_date_from']);
+        }
+
+        if (! empty($args['join_date_to'])) {
+            $query->where('join_date', '<=', $args['join_date_to']);
+        }
+
+        if (! empty($args['salary_min'])) {
+            $query->where('salary', '>=', $args['salary_min']);
+        }
+
+        if (! empty($args['salary_max'])) {
+            $query->where('salary', '<=', $args['salary_max']);
+        }
+
         $paginator = $query->paginate(
             perPage: 15,
             page: $args['page'] ?? 1
