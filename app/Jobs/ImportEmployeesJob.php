@@ -35,7 +35,9 @@ class ImportEmployeesJob implements ShouldQueue
 
             $task->update([
                 'status' => 'completed',
-                'success_count' => $import->getRowCount() - count($errors),
+                // getRowCount() only counts rows that passed validation and reached
+                // collection(); failed rows are skipped by SkipsOnFailure.
+                'success_count' => $import->getRowCount(),
                 'errors' => $errors,
             ]);
         } catch (Throwable $exception) {

@@ -5,6 +5,7 @@ namespace App\GraphQL\Queries;
 use App\Models\EmployeeTransferTask;
 use GraphQL\Error\Error;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\URL;
 
 class EmployeeTransferTaskQuery
 {
@@ -33,7 +34,7 @@ class EmployeeTransferTaskQuery
             'errors' => $task->errors ?? [],
             'error_message' => $task->error_message,
             'url' => $task->output_path
-                ? route('download.export', ['filename' => basename($task->output_path)])
+                ? URL::temporarySignedRoute('download.export', now()->addMinutes(30), ['filename' => basename($task->output_path)])
                 : null,
         ];
     }

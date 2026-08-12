@@ -365,4 +365,4 @@ A sample file can be generated using `php artisan sample:excel`.
 - **Soft deletes**: Deleted employees are hidden from queries but remain in the database and can be restored. Deleted email addresses cannot be reused by new employees.
 - **Authorization**: Access control is handled within each resolver class by checking the authenticated user's `system_role`. Admin-only operations throw an "unauthorized" GraphQL error for non-admin users.
 - **Bulk generation**: The `generateEmployees` mutation dispatches a queued job that processes records in chunks of 500 to avoid memory issues.
-- **Excel transfers**: Imports and exports run in queued jobs. Each request creates an `employee_transfer_tasks` record; poll `employeeTransferTask` for status, validation errors, and the completed export URL.
+- **Excel transfers**: Imports and exports run in queued jobs. Each request creates an `employee_transfer_tasks` record; poll `employeeTransferTask` for status, per-row validation errors, and the completed export URL — a temporary signed URL that expires after 30 minutes. Uploads are validated up front (`xlsx`/`xls`/`csv`, max 10 MB).

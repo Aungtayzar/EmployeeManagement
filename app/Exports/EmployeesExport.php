@@ -17,8 +17,6 @@ class EmployeesExport implements FromQuery, WithHeadings, WithMapping
     public function headings(): array
     {
         return [
-            'ID',
-            'User ID',
             'First Name',
             'Last Name',
             'Email',
@@ -28,16 +26,12 @@ class EmployeesExport implements FromQuery, WithHeadings, WithMapping
             'System Role',
             'Job Role',
             'Join Date',
-            'Created At',
-            'Updated At',
         ];
     }
 
     public function map($employee): array
     {
         return [
-            $employee->id,
-            $employee->user_id,
             $employee->first_name,
             $employee->last_name,
             $employee->user?->email,
@@ -46,9 +40,7 @@ class EmployeesExport implements FromQuery, WithHeadings, WithMapping
             $employee->salary,
             $employee->user?->system_role,
             $employee->job_role,
-            $employee->join_date,
-            $employee->created_at,
-            $employee->updated_at,
+            $employee->join_date?->format('Y-m-d'),
         ];
     }
 }

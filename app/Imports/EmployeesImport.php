@@ -4,6 +4,7 @@ namespace App\Imports;
 
 use App\Models\Employee;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
@@ -12,6 +13,8 @@ use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Validators\Failure;
+use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
+use Throwable;
 
 class EmployeesImport implements SkipsOnFailure, ToCollection, WithChunkReading, WithHeadingRow, WithValidation
 {
@@ -87,7 +90,38 @@ class EmployeesImport implements SkipsOnFailure, ToCollection, WithChunkReading,
             'email' => ['required', 'email', 'max:255'],
             'salary' => ['nullable', 'numeric', 'min:0'],
             'system_role' => ['nullable', 'in:admin,employee'],
+            'join_date' => ['nullable', 'date'],
         ];
+    }
+
+    public function prepareForValidation(array $row): array
+    {
+        $row['join_date'] = $this->normalizeJoinDate($row['join_date'] ?? null);
+
+        return $row;
+    }
+
+    /**
+     * Normalize join_date to 'Y-m-d' regardless of how Excel stored it:
+     * real date cells arrive as raw serial numbers (e.g. 45881), text cells
+     * as strings ('2024-02-01', '8/12/2026', '2026-08-12 00:00:00').
+     */
+    private function normalizeJoinDate(mixed $value): mixed
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        try {
+            if (is_numeric($value)) {
+                return ExcelDate::excelToDateTimeObject($value)->format('Y-m-d');
+            }
+
+            return Carbon::parse($value)->format('Y-m-d');
+        } catch (Throwable) {
+            // Leave untouched so the 'date' rule reports it as a row failure.
+            return $value;
+        }
     }
 
     public function onFailure(Failure ...$failures): void
